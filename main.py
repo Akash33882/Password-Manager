@@ -2,6 +2,7 @@ import tkinter
 from tkinter import *
 from tkinter import messagebox
 import random
+import json
 
 # ---------------------------- PASSWORD GENERATOR ------------------------------- #
 
@@ -38,6 +39,13 @@ def save():
     email = email_entry.get()
     password = password_entry.get()
 
+    new_data = {
+        website : {
+            "email" : email,
+            "password" : password
+            }
+    }
+
     if len(email) == 0 or len(password) == 0 or len(website) == 0:
         messagebox.showinfo(title="Warning", message="Please Enter a value before saving")
     else:
@@ -47,10 +55,41 @@ def save():
                                                               f"Password : {password}\n"
                                                               f"Want to save these ?\n")
         if is_ok:
-            with open("data.txt",'a') as data:
-                data.write(f"{website} | {email} | {password}\n")
+            try:
+                with open("data.json", 'r') as data_file:
+                    data = json.load(data_file)
+            except FileNotFoundError:
+                with open("data.json", 'w') as data_file:
+                    json.dump(data, data_file, indent=4)
+            else:
+                data.update(new_data)
+                with open("data.json", "w") as data_file:
+                    json.dump(data, data_file, indent=4)
+            finally:
                 website_entry.delete(0, END)
                 password_entry.delete(0, END)
+
+# ---------------------------- Search Mechanism ----------------------- #
+
+def search():
+    website = website_entry.get()
+
+    try:
+        with open("data.json", "r") as data_file:
+            data = json.load(data_file)
+    except FileNotFoundError:
+        with open("data.json", "w") as data_file:
+            data_file.close()
+        messagebox.showinfo(title="Warning", message="File Not Found")
+    else:
+        if website in data:
+            messagebox.showinfo(message=f"Website : {data[website]["email"]}\n"
+                                f"Password : {data[website]["password"]}",
+                                title="Data Found")
+        elif len(website) == 0:
+            messagebox.showinfo(title="Warning", message="Please Enter a Website to Search")
+        else:
+            messagebox.showinfo(message="Website Not Found!!")
 
 # ---------------------------- UI SETUP ------------------------------- #
 
@@ -76,15 +115,15 @@ password_label.grid(row=3, column=0, pady=5)
 
 #ENTRIES
 website_entry = Entry(width=35)
-website_entry.grid(row=1, column=1, columnspan=2, pady=5, sticky="EW")
+website_entry.grid(row=1, column=1, columnspan=1, pady=5, sticky="EW")
 website_entry.focus()
 
 email_entry = Entry(width=35)
 email_entry.grid(row=2, column=1, columnspan=2, pady=5, sticky="EW")
-email_entry.insert(END, "akashakash27902@gmail.com")
+email_entry.insert(END, "akashcn.1208@gmail.com")
 
-password_entry = Entry(width=21)
-password_entry.grid(row=3, column=1, pady=5, sticky="W")
+password_entry = Entry(width=35)
+password_entry.grid(row=3, column=1, columnspan=1, pady=5, sticky="W")
 
 #BUTTONS
 generate_button = Button(text="Generate Password", command=gen_pass)
@@ -92,6 +131,14 @@ generate_button.grid(row=3, column=2, pady=5)
 
 add_button = Button(text="Add", width=36, command=save)
 add_button.grid(row=4, column=1, columnspan=2, pady=10)
+
+search_button = Button(text="Search", width=15, command=search)
+search_button.grid(row=1, column=2, pady=5)
+
+
+
+
+
 
 
 window.mainloop()
